@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
   // do a safety check to make sure we won't overwrite anything at dump time
   char ofname[256];
-  set_ofname(argv[1], ofname);
+  set_ofname(argv[2], ofname);
   FILE *ofp = fopen(ofname, "r");
   if (ofp) {
     fprintf(stderr, " ! refusing to continue. file exists at %s\n", ofname);
@@ -33,10 +33,10 @@ int main(int argc, char *argv[]) {
 
   geom_koral geom = { 0 };
   geom.dtype = KORAL_GRMHD;
-  geom.dtype = KORAL_RADGRMHD;
+  //geom.dtype = KORAL_RADGRMHD;
 
   fprintf(stderr, "reading KORAL define for geometry and sizes...\n");
-  if (koral_init(argv[2], &geom) != 0) {
+  if (koral_init(argv[1], &geom) != 0) {
     fprintf(stderr, " ! unable to get parameters. exiting.\n");
     exit(-1);
   }
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   double *prims = malloc(sizeof(*prims) * geom.nx * geom.ny * geom.nz * 8);
 
   fprintf(stderr, "reading KORAL datafile...\n");
-  if (koral_read(argv[1], rawdata, &geom) != 0) {
+  if (koral_read(argv[2], rawdata, &geom) != 0) {
     fprintf(stderr, " ! unable to read KORAL datafile. exiting.\n");
     exit(-2);
   }
