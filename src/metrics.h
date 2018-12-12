@@ -15,6 +15,7 @@ void calc_gcon_bl(double *bl, double gcon[4][4]);
 void calc_gcon_ks(double *ks, double gcon[4][4]);
 
 // linear algebra
+double gdet_func(double gcov[4][4]);
 int invert_44(double a[][4], double ia[][4]);
 
 #endif // METRICS_H

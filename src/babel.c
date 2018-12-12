@@ -5,6 +5,9 @@
 #include "iharm/iharm.h"
 #include "koral/koral.h"
 
+int OUTPUT_GRID = 0;
+int OUTPUT_GRID_ONLY = 0;
+
 void set_ofname(char *fname, char ofname[256]) {
   // replaces .dat with .h5
   char *s = fname, *e = ofname;
@@ -53,12 +56,18 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "  startx[i] = (%g, %g, %g)\n", geom.startx[1], geom.startx[2], geom.startx[3]);
   fprintf(stderr, "  dx[i]     = (%g, %g, %g)\n", geom.dx[1], geom.dx[2], geom.dx[3]);
 
-  fprintf(stderr, "transforming data to iharm3d format...\n");
-  koral_translate(rawdata, prims, &geom);
+  if (OUTPUT_GRID || OUTPUT_GRID_ONLY) {
+    iharm_write_grid_koral("grid.h5", &geom);
+  }
 
-  fprintf(stderr, "saving iharm dump file...\n");
-  iharm_write_header_koral(ofname, &geom);
-  iharm_dump(ofname, prims, geom.nx, geom.ny, geom.nz, 8);
+  if (! OUTPUT_GRID_ONLY) {
+    fprintf(stderr, "transforming data to iharm3d format...\n");
+    koral_translate(rawdata, prims, &geom);
+
+    fprintf(stderr, "saving iharm dump file...\n");
+    iharm_write_header_koral(ofname, &geom);
+    iharm_dump(ofname, prims, geom.nx, geom.ny, geom.nz, 8);
+  }
 
   fprintf(stderr, "done!\n\n");
 

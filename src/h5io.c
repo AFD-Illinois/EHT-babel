@@ -114,3 +114,13 @@ void h5io_add_data_flt_4d(hid_t fid, const char *path, hsize_t n1, hsize_t n2, h
   H5Sclose(dataspace_id); 
 }
 
+void h5io_add_data_flt_5d(hid_t fid, const char *path, hsize_t n1, hsize_t n2, hsize_t n3, hsize_t n4, hsize_t n5, double data[n1][n2][n3][n4][n5])
+{
+  hsize_t dims[5] = { n1, n2, n3, n4, n5 };
+  hid_t dataspace_id = H5Screate_simple(5, dims, NULL);
+  hid_t dataset_id = H5Dcreate2(fid, path, H5IO_FMT_FLT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+  H5Dclose(dataset_id);
+  H5Sclose(dataspace_id); 
+}
+

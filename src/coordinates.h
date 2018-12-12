@@ -32,6 +32,8 @@ void coco_KS2BL(double xKS[4], double xBL[4]);
 void coco_EKS2KS(double xEKS[4], double xKS[4]);
 void coco_KS2EKS(double xKS[4], double xEKS[4]);
 
+void coco_SPH2CART(double xSPH[3], double xCART[3]);
+
 void dxdx_KS2EKS(double xKS[4], double dxdxKS2EKS[4][4]);
 void dxdx_EKS2KS(double xEKS[4], double dxdxEKS2KS[4][4]);
 

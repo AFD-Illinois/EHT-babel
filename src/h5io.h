@@ -33,4 +33,6 @@ void h5io_add_data_dbl_3d(hid_t fid, const char *path, hsize_t n1, hsize_t n2, h
 
 void h5io_add_data_flt_4d(hid_t fid, const char *path, hsize_t n1, hsize_t n2, hsize_t n3, hsize_t n4, double data[n1][n2][n3][n4]);
 
+void h5io_add_data_flt_5d(hid_t fid, const char *path, hsize_t n1, hsize_t n2, hsize_t n3, hsize_t n4, hsize_t n5, double data[n1][n2][n3][n4][n5]);
+
 #endif // H5IO_H

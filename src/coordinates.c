@@ -108,6 +108,17 @@ void coco_KS2EKS(double xKS[4], double xEKS[4]) {
   xEKS[3] = xKS[3];
 }
 
+void coco_SPH2CART(double xSPH[3], double xCART[3]) {
+  // transform from xSPH to xCART
+
+  double r = xSPH[0];
+  double h = xSPH[1];
+  double p = xSPH[2];
+
+  xCART[0] = r * sin(h) * cos(p);
+  xCART[1] = r * sin(h) * sin(p);
+  xCART[2] = r * cos(h);
+}
 
 void dxdx_BL2KS(double xBL[4], double dxdxBL2KS[4][4]) {
   // get the Jacobian from BL -> KS at xBL (in BL coordinates)

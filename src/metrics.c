@@ -81,6 +81,35 @@ void calc_gcon_ks(double *xKS, double gcon[4][4]) {
   gcon[3][3] = Power(Csc(x2),2)/(Power(x1,2) + Power(a,2)*Power(Cos(x2),2));
 }
 
+// return returns sqrt(abs(det(gcov)))
+double gdet_func(double gcov[4][4]) {
+  // credit to polygenelubricants at https://stackoverflow.com/a/2937973
+  // for the hardcoded determinant
+
+  double m[16] = { 0 };
+  for (int mu=0; mu<4; ++mu) {
+    for (int nu=0; nu<4; ++nu) {
+      int offset = mu*4 + nu;
+      m[offset] = gcov[mu][nu];
+    }
+  }
+
+  double gdet =
+         m[12] * m[9]  * m[6]  * m[3]   -  m[8] * m[13] * m[6]  * m[3]   -
+         m[12] * m[5]  * m[10] * m[3]   +  m[4] * m[13] * m[10] * m[3]   +
+         m[8]  * m[5]  * m[14] * m[3]   -  m[4] * m[9]  * m[14] * m[3]   -
+         m[12] * m[9]  * m[2]  * m[7]   +  m[8] * m[13] * m[2]  * m[7]   +
+         m[12] * m[1]  * m[10] * m[7]   -  m[0] * m[13] * m[10] * m[7]   -
+         m[8]  * m[1]  * m[14] * m[7]   +  m[0] * m[9]  * m[14] * m[7]   +
+         m[12] * m[5]  * m[2]  * m[11]  -  m[4] * m[13] * m[2]  * m[11]  -
+         m[12] * m[1]  * m[6]  * m[11]  +  m[0] * m[13] * m[6]  * m[11]  +
+         m[4]  * m[1]  * m[14] * m[11]  -  m[0] * m[5]  * m[14] * m[11]  -
+         m[8]  * m[5]  * m[2]  * m[15]  +  m[4] * m[9]  * m[2]  * m[15]  +
+         m[8]  * m[1]  * m[6]  * m[15]  -  m[0] * m[9]  * m[6]  * m[15]  -
+         m[4]  * m[1]  * m[10] * m[15]  +  m[0] * m[5]  * m[10] * m[15];
+
+  return sqrt(fabs(gdet));
+}
 
 // taken from koral_lite:misc.c
 int invert_44(double a[][4], double ia[][4]) {
