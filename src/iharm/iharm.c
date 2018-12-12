@@ -127,7 +127,7 @@ int iharm_write_grid_koral(char *fname, geom_koral *geom) {
   }
 
   // now save  
-  hid_t fid = H5Fopen(fname, H5F_ACC_RDWR, H5P_DEFAULT);
+  hid_t fid = H5Fcreate(fname, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
   if (fid < 0) {
     return -1;
   }
