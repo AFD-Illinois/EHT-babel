@@ -479,7 +479,7 @@ int koral_translate(double ****data, double *prims, geom_koral *geom) {
         // e- Entropies from temperature
         double thetae = te/(M_ELECTRON_CGS * CL_CGS * CL_CGS);
         double Thetae_unit = (M_PROTON_CGS / M_ELECTRON_CGS);
-        double kel = thetae/pow(rho, geom->gam_e-1.)/Thetae_unit;
+        double kel = thetae/pow(rho * geom->rhoCGS2GU , geom->gam_e-1.)/Thetae_unit;
         double ktot = 0.;  // TODO
 
         // update prims array
