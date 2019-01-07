@@ -26,6 +26,8 @@
 // these shouldn't change  
 #define K_BOLTZ_CGS (1.3806488e-16)
 #define M_PROTON_CGS (1.67262158e-24)
+#define M_ELECTRON_CGS (9.1093826e-28)
+#define CL_CGS (2.99792458e10)
 
 // KORAL-internal units. used for conversion between CODES & CGS
 // the following list has been abbreviated to remove tilde units

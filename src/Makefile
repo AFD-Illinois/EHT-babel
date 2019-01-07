@@ -1,5 +1,5 @@
 
-CC=h5cc
+CC=h5pcc
 EXE=babel
 
 all:
