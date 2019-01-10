@@ -476,11 +476,11 @@ int koral_translate(double ****data, double *prims, geom_koral *geom) {
         double B2 = bconEKS[2]*uconEKS[0] - bconEKS[0]*uconEKS[2];
         double B3 = bconEKS[3]*uconEKS[0] - bconEKS[0]*uconEKS[3];
 
-        // e- Entropies from temperature
-        double thetae = te/(M_ELECTRON_CGS * CL_CGS * CL_CGS);
+        // Find thetae from temperature in K, and entropy from that
+        double thetae = te*K_BOLTZ_CGS/(M_ELECTRON_CGS * CL_CGS * CL_CGS);
         double Thetae_unit = (M_PROTON_CGS / M_ELECTRON_CGS);
         double kel = thetae/pow(rho * geom->rhoCGS2GU , geom->gam_e-1.)/Thetae_unit;
-        double ktot = 0.;  // TODO
+        double ktot = 0.;  // TODO Add if this becomes necessary
 
         // update prims array
         int nprim;
