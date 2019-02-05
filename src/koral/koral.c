@@ -34,7 +34,7 @@ int koral_init_RadGRMHD(char *fname, geom_koral *geom) {
   // BHSPIN, MKSR0, MKSH0, MKSMY1, MKSMY2, MKSMP0, MYCOORDS,
   // DTOUT1, OUTCOORDS, GAMMA
 
-  geom->np = 14; // 3 coordinates + 2+4+4 "prims" + Gamma
+  geom->np = 16; // 3 coordinates + 2+4+4 "prims" + Te,Tp + Gamma
 
   FILE *fp = NULL;
   char *line = NULL;
@@ -249,13 +249,13 @@ int koral_read(char *fname, double ****data, geom_koral *geom) {
 
     int idum, xi, xj, xk;
     double r, h, p;
-    double rho, tgas, u0, u1, u2, u3, b0, b1, b2, b3, gamma;
+    double rho, tgas, u0, u1, u2, u3, b0, b1, b2, b3, te, ti, gamma;
     double fdum;
 
     while ( fscanf(fp, "%d %d %d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", 
         &xi, &xj, &xk, &fdum, &fdum, &fdum, &r, &h, &p,
         &rho, &tgas, &u0, &u1, &u2, &u3, &b0, &b1, &b2, &b3,
-        &fdum, &fdum, &fdum, &gamma) > 0 ) {
+        &fdum, &te, &ti, &gamma) > 0 ) {
 
       xi += KORAL_XI_OFFSET;
 
@@ -276,7 +276,10 @@ int koral_read(char *fname, double ****data, geom_koral *geom) {
       data[xi][xj][xk][11] = b2;
       data[xi][xj][xk][12] = b3;
 
-      data[xi][xj][xk][13] = gamma;
+      data[xi][xj][xk][13] = te;
+      data[xi][xj][xk][14] = ti;
+
+      data[xi][xj][xk][15] = gamma;
 
     }
 
@@ -342,6 +345,7 @@ int koral_translate(double ****data, double *prims, geom_koral *geom) {
         double tgas = data[i][j][k][4];
         double ucon[4] = { 0. };
         double bcon[4] = { 0. };
+        double te, ti;
 
         ucon[0] = data[i][j][k][5];
         ucon[1] = data[i][j][k][6];
@@ -371,7 +375,10 @@ int koral_translate(double ****data, double *prims, geom_koral *geom) {
           bcon[2] = data[i][j][k][11];
           bcon[3] = data[i][j][k][12];
 
-          gam = data[i][j][k][13];
+          te = data[i][j][k][13];
+          ti = data[i][j][k][14];
+
+          gam = data[i][j][k][15];
 
         }
 
@@ -469,15 +476,27 @@ int koral_translate(double ****data, double *prims, geom_koral *geom) {
         double B2 = bconEKS[2]*uconEKS[0] - bconEKS[0]*uconEKS[2];
         double B3 = bconEKS[3]*uconEKS[0] - bconEKS[0]*uconEKS[3];
 
+        // Find thetae from temperature in K, and entropy from that
+        double thetae = te*K_BOLTZ_CGS/(M_ELECTRON_CGS * CL_CGS * CL_CGS);
+        double Thetae_unit = (M_PROTON_CGS / M_ELECTRON_CGS);
+        double kel = thetae/pow(rho * geom->rhoCGS2GU , geom->gam_e-1.)/Thetae_unit;
+        double ktot = 0.;  // TODO Add if this becomes necessary
+
         // update prims array
-        prims[IJKP(i,j,k,0,geom->ny,geom->nz,8)] = rho * geom->rhoCGS2GU;
-        prims[IJKP(i,j,k,1,geom->ny,geom->nz,8)] = UU * geom->uintCGS2GU;
-        prims[IJKP(i,j,k,2,geom->ny,geom->nz,8)] = v1;
-        prims[IJKP(i,j,k,3,geom->ny,geom->nz,8)] = v2;
-        prims[IJKP(i,j,k,4,geom->ny,geom->nz,8)] = v3;
-        prims[IJKP(i,j,k,5,geom->ny,geom->nz,8)] = B1 * sqrt(geom->endenCGS2GU);
-        prims[IJKP(i,j,k,6,geom->ny,geom->nz,8)] = B2 * sqrt(geom->endenCGS2GU);
-        prims[IJKP(i,j,k,7,geom->ny,geom->nz,8)] = B3 * sqrt(geom->endenCGS2GU);
+        int nprim;
+        if (geom->dtype == KORAL_RADGRMHD) {nprim = 10;} else {nprim = 8;}
+        prims[IJKP(i,j,k,0,geom->ny,geom->nz,nprim)] = rho * geom->rhoCGS2GU;
+        prims[IJKP(i,j,k,1,geom->ny,geom->nz,nprim)] = UU * geom->uintCGS2GU;
+        prims[IJKP(i,j,k,2,geom->ny,geom->nz,nprim)] = v1;
+        prims[IJKP(i,j,k,3,geom->ny,geom->nz,nprim)] = v2;
+        prims[IJKP(i,j,k,4,geom->ny,geom->nz,nprim)] = v3;
+        prims[IJKP(i,j,k,5,geom->ny,geom->nz,nprim)] = B1 * sqrt(geom->endenCGS2GU);
+        prims[IJKP(i,j,k,6,geom->ny,geom->nz,nprim)] = B2 * sqrt(geom->endenCGS2GU);
+        prims[IJKP(i,j,k,7,geom->ny,geom->nz,nprim)] = B3 * sqrt(geom->endenCGS2GU);
+        if (geom->dtype == KORAL_RADGRMHD) {
+          prims[IJKP(i,j,k,8,geom->ny,geom->nz,nprim)] = kel;
+          prims[IJKP(i,j,k,9,geom->ny,geom->nz,nprim)] = ktot;
+        }
 
         if (0 == 1) {
           // did we do that correctly? compute ucon, bcon in KORAL's 

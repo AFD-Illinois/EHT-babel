@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
   }
 
   geom_koral geom = { 0 };
-  geom.dtype = KORAL_GRMHD;
-  //geom.dtype = KORAL_RADGRMHD;
+  //geom.dtype = KORAL_GRMHD;
+  geom.dtype = KORAL_RADGRMHD;
 
   fprintf(stderr, "reading KORAL define for geometry and sizes...\n");
   if (koral_init(argv[1], &geom) != 0) {
@@ -44,8 +44,13 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
+  // TODO allocate GRMHD/Rad differently here
+
+
   double ****rawdata = malloc4(geom.nx, geom.ny, geom.nz, geom.np);
-  double *prims = malloc(sizeof(*prims) * geom.nx * geom.ny * geom.nz * 8);
+  int nprim;
+  if (geom.dtype == KORAL_RADGRMHD) {nprim = 10;} else {nprim = 8;}
+  double *prims = malloc(sizeof(*prims) * geom.nx * geom.ny * geom.nz * nprim);
 
   fprintf(stderr, "reading KORAL datafile...\n");
   if (koral_read(argv[2], rawdata, &geom) != 0) {
@@ -66,7 +71,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(stderr, "saving iharm dump file...\n");
     iharm_write_header_koral(ofname, &geom);
-    iharm_dump(ofname, prims, geom.nx, geom.ny, geom.nz, 8);
+    iharm_dump(ofname, prims, geom.nx, geom.ny, geom.nz, nprim);
   }
 
   fprintf(stderr, "done!\n\n");
