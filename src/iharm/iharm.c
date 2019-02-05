@@ -147,7 +147,7 @@ int iharm_write_grid_koral(char *fname, geom_koral *geom) {
 
   h5io_add_data_dbl_3d(fid, "/r", geom->nx, geom->ny, geom->nz, r);
   h5io_add_data_dbl_3d(fid, "/th", geom->nx, geom->ny, geom->nz, th);
-  h5io_add_data_dbl_3d(fid, "/prims", geom->nx, geom->ny, geom->nz, phi);
+  h5io_add_data_dbl_3d(fid, "/phi", geom->nx, geom->ny, geom->nz, phi);
 
   h5io_add_data_dbl_3d(fid, "/X", geom->nx, geom->ny, geom->nz, X);
   h5io_add_data_dbl_3d(fid, "/Y", geom->nx, geom->ny, geom->nz, Y);
