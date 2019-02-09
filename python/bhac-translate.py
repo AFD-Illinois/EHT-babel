@@ -62,6 +62,7 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
 
   # Now write it all
   with h5py.File(harmfname,"w") as hf:
+    hf['t'] = t
     # Basic header flags
     hdr = hf.create_group('header')
     hdr['n1'] = N1
