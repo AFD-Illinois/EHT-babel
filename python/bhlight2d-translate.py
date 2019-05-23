@@ -54,6 +54,7 @@ if __name__ == "__main__":
    hfp.create_group("/header")
    hfp.create_group("/header/geom")
    hfp.create_group("/header/geom/mks")
+   hfp.create_group("/header/units")
 
    hfp['header']['has_electrons'] = 1
 
@@ -71,14 +72,18 @@ if __name__ == "__main__":
 
    hfp.create_dataset("/header/metric", data=np.string_("MKS"))
    hfp['header']['geom']['mks']['a'] = a
-   hfp['header']['geom']['mks']['Rin'] = rin
-   hfp['header']['geom']['mks']['Rout'] = rout
+   hfp['header']['geom']['mks']['r_in'] = rin
+   hfp['header']['geom']['mks']['r_out'] = rout
    hfp['header']['geom']['mks']['R0'] = R0
    hfp['header']['geom']['mks']['hslope'] = hslope
 
    hfp['header']['gam'] = gam
    hfp['header']['gam_e'] = game
    hfp['header']['gam_p'] = gamp
+
+   hfp['header']['units']['M_unit'] = Munit
+   hfp['header']['units']['L_unit'] = Lunit
+   hfp['header']['units']['T_unit'] = Tunit
 
    hfp['t'] = t
 
