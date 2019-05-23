@@ -13,7 +13,7 @@ Usage:
 $ python3 bhac-translate.py [--gridfile] file1.blk [file2.blk ...]
 ```
 
-Outputs HARM ```.h5``` files alongside all BHAC ```.blk``` files specified, and if specified, also a grid file ```grid.h5``` containing the locations of grid zone centers in KS coordinates, and the local metric in log KS coordinates.
+Outputs HARM ```.h5``` files alongside all BHAC ```.blk``` files specified.  If passed ```--gridfile```, also outputs a file ```grid.h5``` containing the locations of grid zone centers in KS coordinates, and the local metric in native coordinates.
 
 ### KORAL:
 
