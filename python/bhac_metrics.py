@@ -1,7 +1,7 @@
 
 import numpy as np
 
-def gcov_logks_2d(x1,x2,a):
+def gcov_logks_2d(x1,x2,a, bhac_mks=False):
   """ Returns logks g_munu(x1,x2) for given a.
       Courtesy of (stolen from) George Wong"""
   r = np.exp(x1)
@@ -24,12 +24,22 @@ def gcov_logks_2d(x1,x2,a):
   gcov[:,:,3,0] = gcov[:,:,0,3]
   gcov[:,:,3,1] = gcov[:,:,1,3]
   gcov[:,:,3,3] = s2 * (rho2 + a*a * s2 * (1. + 2. * r / rho2))
-  # transform to logks
-  trans = np.zeros([len(x1),len(x2),4,4])
-  trans[:,:,0,0] = 1.
-  trans[:,:,1,1] = r
-  trans[:,:,2,2] = 1.
-  trans[:,:,3,3] = 1.
+  
+  if bhac_ks:
+    # transform to bhac_mks
+    trans = np.zeros([len(x1),len(x2),4,4])
+    trans[:,:,0,0] = 1.
+    trans[:,:,1,1] = r
+    trans[:,:,2,2] = 1 - 2*self.hslope + 12 * self.hslope * ((x[2] / np.pi)**2 - x[2]/np.pi)
+    trans[:,:,3,3] = 1.
+  else:
+    # transform to logks
+    trans = np.zeros([len(x1),len(x2),4,4])
+    trans[:,:,0,0] = 1.
+    trans[:,:,1,1] = r
+    trans[:,:,2,2] = 1.
+    trans[:,:,3,3] = 1.
+
   #return np.transpose(np.matmul(trans,np.matmul(gcov,trans)),(1,0,2,3))
   return np.matmul(trans,np.matmul(gcov,trans))
 
