@@ -4,7 +4,7 @@
 // write header from koral geometry
 int iharm_write_header_koral(char *fname, geom_koral *geom) {
 
-  assert(geom->zone_coordinates == MKS3COORDS); 
+  assert(geom->zone_coordinates == MKS3COORDS);
 
   hid_t fid = H5Fcreate(fname, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
   if (fid < 0) {
@@ -48,7 +48,7 @@ int iharm_write_header_koral(char *fname, geom_koral *geom) {
   h5io_add_data_dbl(fid, "/header/gam", geom->gam);
   h5io_add_data_dbl(fid, "/header/gam_e", geom->gam_e);
   h5io_add_data_dbl(fid, "/header/gam_p", geom->gam_p);
-  
+
   h5io_add_data_dbl(fid, "/t", geom->t);
   h5io_add_data_dbl(fid, "/dump_cadence", geom->DTOUT1);
 
@@ -75,11 +75,17 @@ int iharm_write_grid_koral(char *fname, geom_koral *geom) {
   double *Y = malloc(sizeof(*Y) * geom->nx * geom->ny * geom->nz * 1);
   double *Z = malloc(sizeof(*Z) * geom->nx * geom->ny * geom->nz * 1);
 
-  // geometry
+  // geometry in EKS (vectors)
   double *gcon = malloc(sizeof(*gcon) * geom->nx * geom->ny * geom->nz * 16);
   double *gcov = malloc(sizeof(*gcov) * geom->nx * geom->ny * geom->nz * 16);
   double *gdet = malloc(sizeof(*gdet) * geom->nx * geom->ny * geom->nz * 1);
   double *lapse = malloc(sizeof(*lapse) * geom->nx * geom->ny * geom->nz * 1);
+
+  // geometry in MKS3 (coordinate zones)
+  double *gcon_zone = malloc(sizeof(*gcon) * geom->nx * geom->ny * geom->nz * 16);
+  double *gcov_zone = malloc(sizeof(*gcov) * geom->nx * geom->ny * geom->nz * 16);
+  double *gdet_zone = malloc(sizeof(*gdet) * geom->nx * geom->ny * geom->nz * 1);
+  double *lapse_zone = malloc(sizeof(*lapse) * geom->nx * geom->ny * geom->nz * 1);
 
   // compute
   #pragma omp parallel for collapse(2)
@@ -117,25 +123,37 @@ int iharm_write_grid_koral(char *fname, geom_koral *geom) {
         // now get various geometric values
         double gconEKS[4][4] = { 0 };
         double gcovEKS[4][4] = { 0 };
+        double gconMKS3[4][4] = { 0 };
+        double gcovMKS3[4][4] = { 0 };
+
         calc_gcon_eks(xEKS, gconEKS);
         invert_44(gconEKS, gcovEKS);
+
+        calc_gcon_mks3(xMKS3,gconMKS3);
+        invert_44(gconMKS3,gcovMKS3);
 
         for (int mu=0; mu<4; ++mu) {
           for (int nu=0; nu<4; ++nu) {
             int offset = mu*4 + nu;
             gcon[index5d+offset] = gconEKS[mu][nu];
             gcov[index5d+offset] = gcovEKS[mu][nu];
+
+            gcon_zone[index5d+offset] = gconMKS3[mu][nu];
+            gcov_zone[index5d+offset] = gcovMKS3[mu][nu];
           }
         }
 
         lapse[index3d] = 1./sqrt(-gconEKS[0][0]);
         gdet[index3d] = gdet_func(gcovEKS);
 
+        lapse_zone[index3d] = 1./sqrt(-gconMKS3[0][0]);
+        gdet_zone[index3d] = gdet_func(gcovMKS3);
+
       }
     }
   }
 
-  // now save  
+  // now save
   hid_t fid = H5Fcreate(fname, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
   if (fid < 0) {
     return -1;
@@ -147,7 +165,7 @@ int iharm_write_grid_koral(char *fname, geom_koral *geom) {
 
   h5io_add_data_dbl_3d(fid, "/r", geom->nx, geom->ny, geom->nz, r);
   h5io_add_data_dbl_3d(fid, "/th", geom->nx, geom->ny, geom->nz, th);
-  h5io_add_data_dbl_3d(fid, "/prims", geom->nx, geom->ny, geom->nz, phi);
+  h5io_add_data_dbl_3d(fid, "/phi", geom->nx, geom->ny, geom->nz, phi);
 
   h5io_add_data_dbl_3d(fid, "/X", geom->nx, geom->ny, geom->nz, X);
   h5io_add_data_dbl_3d(fid, "/Y", geom->nx, geom->ny, geom->nz, Y);
@@ -158,6 +176,12 @@ int iharm_write_grid_koral(char *fname, geom_koral *geom) {
 
   h5io_add_data_dbl_3d(fid, "/lapse", geom->nx, geom->ny, geom->nz, lapse);
   h5io_add_data_dbl_3d(fid, "/gdet", geom->nx, geom->ny, geom->nz, gdet);
+
+  h5io_add_data_flt_5d(fid, "/gcon_zone", geom->nx, geom->ny, geom->nz, 4, 4, gcon_zone);
+  h5io_add_data_flt_5d(fid, "/gcov_zone", geom->nx, geom->ny, geom->nz, 4, 4, gcov_zone);
+
+  h5io_add_data_dbl_3d(fid, "/lapse_zone", geom->nx, geom->ny, geom->nz, lapse_zone);
+  h5io_add_data_dbl_3d(fid, "/gdet_zone", geom->nx, geom->ny, geom->nz, gdet_zone);
 
   H5Fclose(fid);
 
@@ -180,4 +204,3 @@ int iharm_dump(char *fname, double *prims, int nx, int ny, int nz, int np) {
 
   return 0;
 }
-
