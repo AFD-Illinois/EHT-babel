@@ -3,7 +3,7 @@
 ## Translator of BHAC (binary) output to HARM format
 # Currently only supports LOG_KS metric for BHAC output, but is extensible
 
-# Usage bhac_trans.py [--gridfile] file1.blk [file2.blk ...]
+# Usage bhac-translate.py [--gridfile] file1.blk [file2.blk ...]
 
 import sys
 import numpy as np
@@ -101,15 +101,14 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
 
       # Finally, patch theta, which HARM takes to be 0-1
       geom['dx2'] = (stopx2 - startx2)/N2/np.pi
-      
+
     elif metric == "BHAC_MKS":
-      print("BHAC-specific MKS not supported!")
-      exit(-1)
       hdr['metric'] = "BHAC_MKS"
       bmks = hf.create_group('header/geom/bhac_mks')
       bmks['a'] = a
       bmks['hslope'] = hslope
-      # TODO Implement if necessary
+      bmks['r_in'] = np.exp(startx1)      
+      bmks['r_out'] = np.exp(stopx1)
     else:
       print("Metric {} not supported!".format(metric))
       exit(-1)
