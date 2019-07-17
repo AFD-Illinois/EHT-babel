@@ -51,8 +51,8 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
     # Because apparently headers need padding idk
     bf.seek(256, 0)
 
-    print("Time: {} File size: {}x{}x{}, Spin: {}, Grid start: ({},{},{}) stop: ({},{},{})".format(
-           t, N1, N2, N3, a, startx1, startx2, startx3, stopx1, stopx2, stopx3))
+    print("Time: {} File size: {}x{}x{}, Spin: {}, hslope: {}, Grid start: ({},{},{}) stop: ({},{},{})".format(
+           t, N1, N2, N3, a, hslope, startx1, startx2, startx3, stopx1, stopx2, stopx3))
 
     prims_bhac = np.zeros((N1,N2,N3,8), dtype=np.float32)
     for k in range(N3):
@@ -108,12 +108,12 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
       bmks = hf.create_group('header/geom/bhac_mks')
       bmks['a'] = a
       bmks['hslope'] = hslope
-      bmks['r_in'] = np.exp(startx1)      
+      bmks['r_in'] = np.exp(startx1)
       bmks['r_out'] = np.exp(stopx1)
-      
+
       # This definition, and in general, patch theta
       geom['dx2'] = (stopx2 - startx2)/N2/np.pi
-      
+
     else:
       print("Metric {} not supported!".format(metric))
       exit(-1)
@@ -157,17 +157,17 @@ if write_grid:
 
     # Get the metric
     gcov = np.zeros((N1,N2,N3,4,4))
-    gcov[:,:,:,:,:] = gcov_logks_2d(grid[:,0,0,0], grid[0,:,0,1], a)[:,:,None,:,:]
+    gcov[:,:,:,:,:] = gcov_logks_2d(X1[:,:,0], X2[:,:,0], a)[:,:,None,:,:]
 
   elif metric == "BHAC_MKS":
     r = np.exp(X1)
-    th = X2 + 2*self.hslope/(np.pi**2)*X2*(np.pi - 2*X2)*(np.pi-X2)
+    th = X2 + 2*hslope/(np.pi**2)*X2*(np.pi - 2*X2)*(np.pi-X2)
     phi = X3
-    
+
     # Get the metric
     gcov = np.zeros((N1,N2,N3,4,4))
-    gcov[:,:,:,:,:] = gcov_logks_2d(grid[:,0,0,0], grid[0,:,0,1], a, bhac_mks=True)[:,:,None,:,:]
-    
+    gcov[:,:,:,:,:] = gcov_logks_2d(X1[:,:,0], X2[:,:,0], a, hslope=hslope, bhac_mks=True)[:,:,None,:,:]
+
   else:
     print("Metric {} not supported!".format(metric))
     exit(-1)
@@ -177,19 +177,19 @@ if write_grid:
   lapse = 1/np.sqrt(-gcon[:,:,:,0,0])
 
   with h5py.File(harmgname,"w") as hf:
-    hf['X1'] = X1
-    hf['X2'] = X2
-    hf['X3'] = X3
+    hf['X1'] = X1.astype(np.float32)
+    hf['X2'] = X2.astype(np.float32)
+    hf['X3'] = X3.astype(np.float32)
 
-    hf['r'] = r
-    hf['th'] = th
-    hf['phi'] = phi
+    hf['r'] = r.astype(np.float32)
+    hf['th'] = th.astype(np.float32)
+    hf['phi'] = phi.astype(np.float32)
 
-    hf['X'] = r*np.sin(th)*np.cos(phi)
-    hf['Y'] = r*np.sin(th)*np.sin(phi)
-    hf['Z'] = r*np.cos(th)
+    hf['X'] = r*np.sin(th)*np.cos(phi).astype(np.float32)
+    hf['Y'] = r*np.sin(th)*np.sin(phi).astype(np.float32)
+    hf['Z'] = r*np.cos(th).astype(np.float32)
 
-    hf['gcon'] = gcon
-    hf['gcov'] = gcov
-    hf['gdet'] = gdet
-    hf['lapse'] = lapse
+    hf['gcon'] = gcon.astype(np.float32)
+    hf['gcov'] = gcov.astype(np.float32)
+    hf['gdet'] = gdet.astype(np.float32)
+    hf['lapse'] = lapse.astype(np.float32)
