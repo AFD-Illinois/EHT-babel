@@ -104,13 +104,16 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
       geom['dx2'] = (stopx2 - startx2)/N2/np.pi
 
     elif metric == "BHAC_MKS":
-      print("BHAC-specific MKS not supported!")
-      exit(-1)
       hdr['metric'] = "BHAC_MKS"
       bmks = hf.create_group('header/geom/bhac_mks')
       bmks['a'] = a
       bmks['hslope'] = hslope
-      # TODO Implement if necessary
+      bmks['r_in'] = np.exp(startx1)      
+      bmks['r_out'] = np.exp(stopx1)
+      
+      # This definition, and in general, patch theta
+      geom['dx2'] = (stopx2 - startx2)/N2/np.pi
+      
     else:
       print("Metric {} not supported!".format(metric))
       exit(-1)
@@ -154,17 +157,24 @@ if write_grid:
 
     # Get the metric
     gcov = np.zeros((N1,N2,N3,4,4))
-    gcov[:,:,:,:,:] = gcov_logks_2d(grid[:,0,0,0], grid[0,:,0,1], a)[:,:,None,:,:] #.reshape((N1,N2,1,4,4)).repeat(N3, axis=2)
-    gcon = np.linalg.inv(gcov)
-    gdet = np.sqrt(-np.linalg.det(gcov))
-    lapse = 1/np.sqrt(-gcon[:,:,:,0,0])
+    gcov[:,:,:,:,:] = gcov_logks_2d(grid[:,0,0,0], grid[0,:,0,1], a)[:,:,None,:,:]
 
   elif metric == "BHAC_MKS":
     r = np.exp(X1)
-    # TODO th = their thing
+    th = X2 + 2*self.hslope/(np.pi**2)*X2*(np.pi - 2*X2)*(np.pi-X2)
+    phi = X3
+    
+    # Get the metric
+    gcov = np.zeros((N1,N2,N3,4,4))
+    gcov[:,:,:,:,:] = gcov_logks_2d(grid[:,0,0,0], grid[0,:,0,1], a, bhac_mks=True)[:,:,None,:,:]
+    
   else:
     print("Metric {} not supported!".format(metric))
     exit(-1)
+
+  gcon = np.linalg.inv(gcov)
+  gdet = np.sqrt(-np.linalg.det(gcov))
+  lapse = 1/np.sqrt(-gcon[:,:,:,0,0])
 
   with h5py.File(harmgname,"w") as hf:
     hf['X1'] = X1
