@@ -18,8 +18,8 @@ if __name__ == "__main__":
         fp = h5py.File(fname, 'r')
         
         grid = fp['Header/Grid']
-        t = grid['t'][0]
-        # Hotaka's N1,2,3 are for a single process
+        # Grid variables
+        # Old N1,2,3 are for a single process
         N1 = grid['totalsize1'][0]
         N2 = grid['totalsize2'][0]
         N3 = grid['totalsize3'][0]
@@ -34,15 +34,21 @@ if __name__ == "__main__":
         startx2 = grid['startx2'][0] + NG * dx2
         startx3 = grid['startx3'][0] + NG * dx3
         
+        # Domain variables
+        t = grid['t'][0]
         a = grid['a'][0]
-        
         gam = grid['gam'][0]
-        
         rin = grid['Rin'][0]
         rout = grid['Rout'][0]
         # Modern IL convention is hslope=1 corresponds to th=x2*pi
         hslope = 1 - grid['h_slope'][0]
         R0 = grid['R0'][0]
+        
+        # IO variables
+        hdr_io = fp['Header/IO']
+        dump_cadence = hdr_io['DT_dump_out'][0]
+        n_dump = hdr_io['N_out'][0]
+        n_step = hdr_io['nstep'][0]
         
         # Get prims data, while verifying some of the above is true
         prims = np.zeros((N1, N2, N3, 8))
@@ -89,7 +95,14 @@ if __name__ == "__main__":
         geom['mks']['R0'] = R0
         geom['mks']['hslope'] = hslope
         
+        # Per-dump numbers
+        hfp['dump_cadence'] = dump_cadence
+        hfp['full_dump_cadence'] = -1
         hfp['t'] = t
+        
+        hfp['is_full_dump'] = 0
+        hfp['n_dump'] = n_dump
+        hfp['n_step'] = n_step
         
         hfp['prims'] = prims
         hfp.close()
