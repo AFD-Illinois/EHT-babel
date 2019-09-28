@@ -27,7 +27,7 @@ if __name__ == "__main__":
    dx2 = float(header[8])
    dx3 = float(header[9])
 
-   MBH = float(header[12])
+   MBH = float(header[12]) # TODO Keep this!
    a = float(header[13])
 
    Lunit = float(header[14])
