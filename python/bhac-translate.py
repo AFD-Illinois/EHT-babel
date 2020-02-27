@@ -89,7 +89,7 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
 
     if metric == "LOG_KS":
       # Hack log_ks for Gammie MKS tooling
-      hfp.create_dataset("/header/metric", data=np.string_("MKS"))
+      hf.create_dataset("/header/metric", data=np.string_("MKS"))
       bmks = hf.create_group('header/geom/mks')
       # Patch a typo
       if a > 0.98:
@@ -104,7 +104,7 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
       geom['dx2'] = (stopx2 - startx2)/N2/np.pi
 
     elif metric == "BHAC_MKS":
-      hfp.create_dataset("/header/metric", data=np.string_("BHAC_MKS"))
+      hf.create_dataset("/header/metric", data=np.string_("BHAC_MKS"))
       bmks = hf.create_group('header/geom/bhac_mks')
       bmks['a'] = a
       bmks['hslope'] = hslope
