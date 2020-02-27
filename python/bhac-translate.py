@@ -63,6 +63,7 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
   # Now write it all
   with h5py.File(harmfname,"w") as hf:
     hf['t'] = t
+    hf['dump_cadence'] = 10 # TODO is there any way to read this from BHAC output?
     # Basic header flags
     hdr = hf.create_group('header')
     hdr['n1'] = N1
