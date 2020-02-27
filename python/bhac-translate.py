@@ -1,29 +1,20 @@
 #!/usr/bin/env python3
 
 ## Translator of BHAC (binary) output to HARM format
-# Currently only supports LOG_KS metric for BHAC output, but is extensible
+# Currently only supports output in LOG_KS and BHAC_MKS metrics, but is extensible
 
-# Usage: bhac-translate.py [--gridfile] file1.blk [file2.blk ...]
+# Usage: bhac-translate.py file1.blk [file2.blk ...]
 
 import sys
 import numpy as np
 import h5py
 
-from bhac_metrics import gcov_logks_2d
-
-if sys.argv[1] in ["-g", "--gridfile"]:
-  bhacfnames = sys.argv[2:]
-  harmfnames = [bfname[:-3]+"h5" for bfname in bhacfnames]
-  write_grid = True
-else:
-  bhacfnames = sys.argv[1:]
-  harmfnames = [bfname[:-3]+"h5" for bfname in bhacfnames]
-  write_grid = False
+bhacfnames = sys.argv[1:]
+harmfnames = [bfname[:-3]+"h5" for bfname in bhacfnames]
 
 for bfname, harmfname in zip(bhacfnames, harmfnames):
   # Open bhac fluid dump
   with open(bfname,"rb") as bf:
-
     N1 = np.frombuffer(bf.read(4), dtype=np.int32)[0]
     N2 = np.frombuffer(bf.read(4), dtype=np.int32)[0]
     N3 = np.frombuffer(bf.read(4), dtype=np.int32)[0]
@@ -38,7 +29,8 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
     gam = np.frombuffer(bf.read(8), dtype=np.float64)[0]
     hslope = np.frombuffer(bf.read(8), dtype=np.float64)[0]
     # metric is a flag to the ray-tracing code for the co-ordinate system in which the GRMHD data is given: -1 is Minkowski, 0 is Boyer-Lindquist, 1 is Kerr-Schild, 2 is modified Kerr-Schild (as used in HARM), 3 is logarithmic Kerr-Schild (i.e. Kerr-Schild with a logarithmic radial co-ordinate), 4 is Cartesian Kerr-Schild.
-    # Note: BHAC MKS is _not_ HARM MKS according to BHAC paper. It stretches theta differently to keep the transformation reversible
+    # Note: Modern BHAC MKS only differs from HARM MKS in using X2 in [0,Pi] and hslope->(1-hslope) i.e. LOG_KS is hslope 0
+    # TODO it wouldn't be too hard to just go ahead and convert everything here, writing in Gammie MKS
     bhac_metric = np.frombuffer(bf.read(4), dtype=np.int32)[0]
     metric = [ "MINKOWSKI", "BL", "KS", "BHAC_MKS", "LOG_KS", "CART_KS" ][bhac_metric+1]
     # code is a flag to the ray-tracing code, equal to 0 for input data from BHAC, equal to 1 for input data from RAISHIN, and equal to 2 for input data from HARM.
@@ -83,38 +75,25 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
     geom['startx2'] = startx2
     geom['startx3'] = startx3
     geom['dx1'] = (stopx1 - startx1)/N1
-    # TODO handle this better if extending this script
-    #geom['dx2'] = (stopx2 - startx2)/N2
+    geom['dx2'] = (stopx2 - startx2)/N2
     geom['dx3'] = (stopx3 - startx3)/N3
     geom['n_dim'] = dim + 1 # HARM includes _all_ dimensions
 
-    if metric == "LOG_KS":
-      # Hack log_ks for Gammie MKS tooling
-      hf.create_dataset("/header/metric", data=np.string_("MKS"))
-      bmks = hf.create_group('header/geom/mks')
-      # Patch a typo
-      if a > 0.98:
-        bmks['a'] = 0.96875
-      else:
-        bmks['a'] = a
-      bmks['hslope'] = 1.
-      bmks['r_in'] = np.exp(startx1)
-      bmks['r_out'] = np.exp(stopx1)
-
-      # Finally, patch theta, which HARM takes to be 0-1
-      geom['dx2'] = (stopx2 - startx2)/N2/np.pi
-
-    elif metric == "BHAC_MKS":
-      hf.create_dataset("/header/metric", data=np.string_("BHAC_MKS"))
-      bmks = hf.create_group('header/geom/bhac_mks')
+    hf.create_dataset("/header/metric", data=np.string_("BHAC_MKS"))
+    bmks = hf.create_group('header/geom/bhac_mks')
+    # Patch a typo
+    if a > 0.98:
+      bmks['a'] = 0.96875
+    else:
       bmks['a'] = a
+
+    bmks['r_in'] = np.exp(startx1)
+    bmks['r_out'] = np.exp(stopx1)
+
+    if metric == "BHAC_MKS":
       bmks['hslope'] = hslope
-      bmks['r_in'] = np.exp(startx1)
-      bmks['r_out'] = np.exp(stopx1)
-
-      # This definition, and in general, patch theta
-      geom['dx2'] = (stopx2 - startx2)/N2/np.pi
-
+    elif metric == "LOG_KS":
+      bmks['hslope'] = 0.
     else:
       print("Metric {} not supported!".format(metric))
       exit(-1)
@@ -135,62 +114,3 @@ for bfname, harmfname in zip(bhacfnames, harmfnames):
     prims[:,:,:,7] = prims_bhac[:,:,:,7]
 
     hf['prims'] = prims
-
-if write_grid:
-  # Open bhac gridfile
-  bhacgname = "/".join(bhacfnames[0].split("/")[:-1] + ["data_grid.blk"])
-  harmgname = "/".join(harmfnames[0].split("/")[:-1] + ["grid.h5"])
-  with open(bhacgname,"rb") as bf:
-    grid = np.zeros((N1,N2,N3,3), dtype=np.float32)
-    for k in range(N3):
-      for j in range(N2):
-        for i in range(N1):
-          grid[i,j,k,:] = np.frombuffer(bf.read(3*4), dtype=np.float32, count=3)
-
-  X1 = grid[:,:,:,0]
-  X2 = grid[:,:,:,1]
-  X3 = grid[:,:,:,2]
-
-  if metric == "LOG_KS":
-    r = np.exp(X1)
-    th = X2 # LOG_KS uses X2=th i.e. 0->PI
-    phi = X3
-
-    # Get the metric
-    gcov = np.zeros((N1,N2,N3,4,4))
-    gcov[:,:,:,:,:] = gcov_logks_2d(X1[:,:,0], X2[:,:,0], a)[:,:,None,:,:]
-
-  elif metric == "BHAC_MKS":
-    r = np.exp(X1)
-    th = X2 + 2*hslope/(np.pi**2)*X2*(np.pi - 2*X2)*(np.pi-X2)
-    phi = X3
-
-    # Get the metric
-    gcov = np.zeros((N1,N2,N3,4,4))
-    gcov[:,:,:,:,:] = gcov_logks_2d(X1[:,:,0], X2[:,:,0], a, hslope=hslope, bhac_mks=True)[:,:,None,:,:]
-
-  else:
-    print("Metric {} not supported!".format(metric))
-    exit(-1)
-
-  gcon = np.linalg.inv(gcov)
-  gdet = np.sqrt(-np.linalg.det(gcov))
-  lapse = 1/np.sqrt(-gcon[:,:,:,0,0])
-
-  with h5py.File(harmgname,"w") as hf:
-    hf['X1'] = X1.astype(np.float32)
-    hf['X2'] = X2.astype(np.float32)
-    hf['X3'] = X3.astype(np.float32)
-
-    hf['r'] = r.astype(np.float32)
-    hf['th'] = th.astype(np.float32)
-    hf['phi'] = phi.astype(np.float32)
-
-    hf['X'] = r*np.sin(th)*np.cos(phi).astype(np.float32)
-    hf['Y'] = r*np.sin(th)*np.sin(phi).astype(np.float32)
-    hf['Z'] = r*np.cos(th).astype(np.float32)
-
-    hf['gcon'] = gcon.astype(np.float32)
-    hf['gcov'] = gcov.astype(np.float32)
-    hf['gdet'] = gdet.astype(np.float32)
-    hf['lapse'] = lapse.astype(np.float32)
