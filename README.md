@@ -1,5 +1,5 @@
 # EHT-babel
-Tools for converting output from ```KORAL```, ```bhlight```, and ```BHAC``` to the HARM HDF5 format specified [here](https://github.com/AFD-Illinois/docs/wiki/Output-Format).
+Tools for converting output from ```KORAL```, ```bhlight```, and ```BHAC``` to the HARM HDF5 format specified [here](https://github.com/AFD-Illinois/docs/wiki/GRMHD-Output-Format).
 
 ## Usage
 
