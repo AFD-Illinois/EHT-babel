@@ -45,18 +45,18 @@ def write_header(hfp, r, h, p, gam, a, mu_i, mu_e, mu_tot):
     hfp.create_group('header')
     hfp.create_group('header/weights')
     hfp.create_group('header/geom')
-    hfp.create_group('header/geom/mks')
+    hfp.create_group('header/geom/eks')
 
-    hfp.create_dataset("/header/metric", data=np.string_("MKS"))
+    hfp.create_dataset("/header/metric", data=np.string_("EKS"))
     hfp['header']['n1'] = N1
     hfp['header']['n2'] = N2
     hfp['header']['n3'] = N3
     
     dx1 = np.diff(np.log(r[:, 0, 0])).mean()
-    dx2 = np.diff(h[0, :, 0]).mean() / np.pi
+    dx2 = np.diff(h[0, :, 0]).mean()
     dx3 = np.diff(p[0, 0, :]).mean()
     startx1 = np.log(r[0, 0, 0]) - dx1/2.
-    startx2 = h[0, 0, 0] / np.pi - dx2/2.
+    startx2 = h[0, 0, 0] - dx2/2.
     startx3 = 0.
 
     # output weights
@@ -74,13 +74,12 @@ def write_header(hfp, r, h, p, gam, a, mu_i, mu_e, mu_tot):
     hfp['header']['geom']['dx2'] = dx2
     hfp['header']['geom']['dx3'] = dx3
 
-    hfp['header']['geom']['mks']['a'] = a
-    hfp['header']['geom']['mks']['hslope'] = 1
+    hfp['header']['geom']['eks']['a'] = a
 
     # these give the actual boundaries
-    hfp['header']['geom']['mks']['r_eh'] = 1. + np.sqrt(1. - a*a)
-    hfp['header']['geom']['mks']['r_in'] = np.exp(startx1)
-    hfp['header']['geom']['mks']['r_out'] = np.exp(startx1 + dx1*N1)
+    hfp['header']['geom']['eks']['r_eh'] = 1. + np.sqrt(1. - a*a)
+    hfp['header']['geom']['eks']['r_in'] = np.exp(startx1)
+    hfp['header']['geom']['eks']['r_out'] = np.exp(startx1 + dx1*N1)
     
     hfp['header']['n_prim'] = 2+3+3+1
     hfp['header']['n_prims_passive'] = 0
@@ -141,7 +140,7 @@ if __name__ == "__main__":
     # compute target units in ipole
     pc = 3.086e18
     kyr = 3.154e10
-    MBH = 4.14e6
+    MBH = 4.3e6
     GNEWT = 6.6742e-8
     CL = 2.99792458e10
     MSUN = 1.989e33
