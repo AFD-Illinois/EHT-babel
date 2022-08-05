@@ -2,6 +2,8 @@ import numpy as np
 import h5py
 import matplotlib.pyplot as plt
 
+import sys
+
 from scipy.interpolate import RegularGridInterpolator
 
 import metrics
@@ -28,6 +30,9 @@ def remap_data(coords, all_coords, data_to_fill):
 def write_header(hfp, r, h, p, gam, a):
 
     N1, N2, N3 = r.shape
+
+    hfp['dump_cadence'] = 5
+    hfp['t'] = 1000
     
     hfp.create_group('header')
     hfp.create_group('header/geom')
@@ -65,7 +70,7 @@ def write_header(hfp, r, h, p, gam, a):
     hfp['header']['n_prim'] = 2+3+3
     hfp['header']['n_prims_passive'] = 0
     hfp['header']['gam'] = gam
-    hfp['header']['has_electrons'] = 3  # forces Theate_unit = MP/ME   ## TODO
+    hfp['header']['has_electrons'] = 0  # forces Theate_unit = MP/ME   ## TODO
     hfp['header']['has_radiation'] = 0
     
     prim_names = [ b"RHO", b"UU", b"U1", b"U2", b"U3", b"B1", b"B2", b"B3" ]
@@ -74,14 +79,13 @@ def write_header(hfp, r, h, p, gam, a):
 if __name__ == "__main__":
 
     ## input
-    fname = 'torus.mhd_gr.00040.athdf'
+    fname = sys.argv[1]
     interp_method = 'linear'
     bhspin = 0.9375
     fluid_gamma = 4./3
-    target_n1 = 128
-    target_n2 = 64
-    target_n3 = 64
-
+    target_n1 = 384
+    target_n2 = 192
+    target_n3 = 192
 
     ### automatic below ###
     reh = 1. + np.sqrt(1. - bhspin*bhspin)
@@ -230,6 +234,9 @@ if __name__ == "__main__":
     rgi = RegularGridInterpolator((all_x1s, all_x2s, all_x3s), internal_energy.transpose((2, 1, 0)), method=interp_method)
     prims[:, :, :, 1] = rgi((X_cks, Y_cks, Z_cks))
 
+    rgi = RegularGridInterpolator((all_x1s, all_x2s, all_x3s), pressure_mag.transpose((2, 1, 0)), method=interp_method)
+    new_pressure_mag = rgi((X_cks, Y_cks, Z_cks))
+
     rgi = RegularGridInterpolator((all_x1s, all_x2s, all_x3s), beta.transpose((2, 1, 0)), method=interp_method)
     new_beta = rgi((X_cks, Y_cks, Z_cks))
 
@@ -246,21 +253,13 @@ if __name__ == "__main__":
     prims[:, :, :, 7] = bcon_eks[:, :, :, 3] * ucon_eks[:, :, :, 0] - bcon_eks[:, :, :, 0] * ucon_eks[:, :, :, 3]
 
     ## output
-    ofname = f"test_output_128_{interp_method}.h5"
+    ofname = fname.replace(".athdf", "") + ".h5"
     ohfp = h5py.File(ofname, 'w')
     write_header(ohfp, R_ks, H_ks, P_ks, fluid_gamma, bhspin)
     ohfp['prims'] = prims
     ohfp['beta'] = new_beta
     ohfp['sigma'] = new_sigma
+    ohfp['pressure_mag'] = new_pressure_mag
     ohfp.close()
-
-
-
-
-
-
-
-
-
 
 
