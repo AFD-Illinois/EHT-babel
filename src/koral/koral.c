@@ -80,6 +80,8 @@ int koral_init_RadGRMHD(char *fname, geom_koral *geom) {
       } else if (strcmp(v1,"GAMMA")==0) {
         if (strcmp(v2,"(5./3.)")==0) {
           geom->gam = 5./3.;
+        } else if (strcmp(v2,"(13./9.)")==0) {
+          geom->gam = 13./9.;
         } else {
           fprintf(stderr, "encountered unknown fluid gamma: %s\n", v2);
         }
